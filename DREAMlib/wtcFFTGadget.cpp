@@ -9,7 +9,6 @@ wtcFFTGadget::wtcFFTGadget()
 
 }
 
-
 int wtcFFTGadget::process( GadgetContainerMessage<IsmrmrdReconData>* m1)
 {
 
@@ -41,18 +40,32 @@ int wtcFFTGadget::process( GadgetContainerMessage<IsmrmrdReconData>* m1)
 
         size_t numberOfSlices = SLC;
 
-            GDEBUG_STREAM("E0 = " << E0 << std::endl
-                             << "E1 = " << E1 << std::endl
-                                << "E2 = " << E2 << std::endl
-                                   << "CHA = " << CHA << std::endl
-                                      << "N = " << N << std::endl
-                                         << "S = " << S << std::endl
-                                            << "SLC = " << SLC << std::endl
-                         );
+        // Calculate the vector to sort the centricly ordered slices.
+        size_t endOfLoop = std::ceil(float(numberOfSlices)/2.0);
+        std::vector<size_t> sortVector;
+        for (size_t iDx = 0; iDx < endOfLoop; iDx++)
+        {
+            sortVector.push_back(iDx);
+            if(sortVector.size()<numberOfSlices)
+            {
+                sortVector.push_back(endOfLoop+iDx);
+            }
+        }
+
+
+//            GDEBUG_STREAM("E0 = " << E0 << std::endl
+//                             << "E1 = " << E1 << std::endl
+//                                << "E2 = " << E2 << std::endl
+//                                   << "CHA = " << CHA << std::endl
+//                                      << "N = " << N << std::endl
+//                                         << "S = " << S << std::endl
+//                                            << "SLC = " << SLC << std::endl
+//                         );
 
         //Loop over Slices,
         for (uint16_t slc=0; slc < SLC; slc++) {
 
+            size_t slcToUse = sortVector[slc];
             //Create a new image
             GadgetContainerMessage<ISMRMRD::ImageHeader>* cm1 =
                     new GadgetContainerMessage<ISMRMRD::ImageHeader>();
@@ -71,7 +84,7 @@ int wtcFFTGadget::process( GadgetContainerMessage<IsmrmrdReconData>* m1)
             //Use the middle header for some info
             ISMRMRD::AcquisitionHeader & acqhdr = dbuff.headers_(dbuff.sampling_.sampling_limits_[1].center_,
                     dbuff.sampling_.sampling_limits_[2].center_,
-                    0, 0, slc);
+                    0, 0, slcToUse);
 
             cm1->getObjectPtr()->matrix_size[0]     = E0;
             cm1->getObjectPtr()->matrix_size[1]     = E1;
@@ -98,7 +111,7 @@ int wtcFFTGadget::process( GadgetContainerMessage<IsmrmrdReconData>* m1)
             cm1->getObjectPtr()->image_index = ++image_counter_;
 
             //Copy the 6D data block [E0,E1,E2,CHA,N,S] for this loc into the output image
-            memcpy(cm2->getObjectPtr()->get_data_ptr(), &dbuff.data_(0,0,0,0,0,0,slc), E0*E1*E2*CHA*N*S*sizeof(std::complex<float>));
+            memcpy(cm2->getObjectPtr()->get_data_ptr(), &dbuff.data_(0,0,0,0,0,0,slcToUse), E0*E1*E2*CHA*N*S*sizeof(std::complex<float>));
 
             //Do the FFTs in place
             hoNDFFT<float>::instance()->ifft3c( *cm2->getObjectPtr() );

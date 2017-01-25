@@ -67,6 +67,13 @@
 </gadget>
 
 <gadget>
+  <name>faToB1</name>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>faToB1Gadget</classname>
+</gadget>
+
+
+<gadget>
   <name>wtcSplit</name>
   <dll>gadgetronDREAMlib</dll>
   <classname>wtcSplitGadget</classname>

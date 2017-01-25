@@ -86,7 +86,7 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 
       // Now do the channel unmixing
       // get the gadget container that will be passed on
-    GadgetContainerMessage< hoNDArray< std::complex<float> > >* m3 =
+      GadgetContainerMessage< hoNDArray< std::complex<float> > >* m3 =
         new GadgetContainerMessage< hoNDArray< std::complex<float> > >();
 
       size_t channelCount = 8;
@@ -169,7 +169,7 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
         {
             hoNDArray<std::complex<float>> diagW;
             diagW.create(repetitions,repetitions);
-            diagW.fill(std::complex<float>(0,0));
+            diagW.fill(std::complex<float>(0,0)); // Fill with zeros so off-diagonals are sensible.
             hoNDArray<std::complex<float>> img;
             img.create(1,repetitions);
 
@@ -187,8 +187,8 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 
             for (size_t rDx = 0; rDx < repetitions; rDx++)
             {
-                //diagW[rDx+(rDx*repetitions)] = pinvWeightRxComb[iDx+(rDx*elements)];
-                diagW[rDx+(rDx*repetitions)] = std::complex<float>(1.0,0.0); // Replace weighting with identity matrix for now
+                diagW[rDx+(rDx*repetitions)] = pinvWeightRxComb[iDx+(rDx*elements)];
+                //diagW[rDx+(rDx*repetitions)] = std::complex<float>(1.0,0.0); // Replace weighting with identity matrix for now
                 img[rDx] = d2[iDx+(rDx*elements)];
             }
 

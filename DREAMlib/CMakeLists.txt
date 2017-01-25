@@ -56,7 +56,13 @@ INCLUDE_DIRECTORIES(${ACE_INCLUDE_DIR}
 
 LINK_DIRECTORIES(${GADGETRON_LIB_DIR})
 
-ADD_LIBRARY(gadgetronDREAMlib SHARED phasePreserveRxGadget.cpp wtcFFTGadget.cpp wtcSplitGadget.cpp wtcDREAMGadget.cpp wtcPTxDREAMGadget.cpp)
+ADD_LIBRARY(gadgetronDREAMlib SHARED
+            phasePreserveRxGadget.cpp
+            wtcFFTGadget.cpp
+            wtcSplitGadget.cpp
+            wtcDREAMGadget.cpp
+            wtcPTxDREAMGadget.cpp
+            faToB1Gadget.cpp)
 
 TARGET_LINK_LIBRARIES(gadgetronDREAMlib 
                       gadgetron_gadgetbase
@@ -69,6 +75,7 @@ INSTALL (FILES phasePreserveRxGadget.h
          wtcSplitGadget.h
          wtcDREAMGadget.h
          wtcPTxDREAMGadget.h
+         faToB1Gadget.h
          DREAMlib_export.h
          DESTINATION include)
 

@@ -1,6 +1,7 @@
 #include "wtcSplitGadget.h"
 #include "hoNDObjectArray.h"
 #include "hoNDArray_elemwise.h"
+#include "mri_core_def.h"
 
 namespace Gadgetron{
 
@@ -60,6 +61,17 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
 
             cm1->getObjectPtr()->repetition = rDx;
             cm1->getObjectPtr()->image_index = ++image_counter_;
+
+            // To DO - add slice and channel image comment.
+            //image comment.
+            GadgetContainerMessage< ISMRMRD::MetaContainer >* cm3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
+            cm2->cont(cm3);
+            std::ostringstream imageCommentStream;
+            imageCommentStream << "Slice: " << m1->getObjectPtr()->slice << " Channel: " << rDx;
+            std::string imageComment = "_" + imageCommentStream.str();
+
+            cm3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment.c_str());
+
 
             //Pass the image down the chain
             if (this->next()->putq(cm1) < 0) {
