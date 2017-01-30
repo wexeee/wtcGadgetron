@@ -78,33 +78,41 @@ for (int iDx = 0; iDx < (pulsePoints-1); iDx++ )
 //flipmap = flipmap./pulse_int;
 //b1map = flipmap./gamma./180*pi;
 //b1map_in_nT_per_V = b1map_in_uT .*1000/rfvolt;
+//multiply by 10 for conversion to ushort for display.
 size_t elements = m2->getObjectPtr()->get_number_of_elements();
 for (size_t iDx = 0; iDx < elements; iDx++ )
 {
-    dst[iDx] = (float(M_PI/180.0)*(src[iDx]/pulseInt)/float(GAMMA)) * float(1000.0/rfvolt_);
+    dst[iDx] = std::complex<float>(10.0,0.0)*(float(M_PI/180.0)*(src[iDx]/pulseInt)/float(GAMMA)) * float(1000.0/rfvolt_);
 }
-        // Modify the headers
+    // Modify the headers to add this as an extra image/series
     cm1->getObjectPtr()->image_series_index += 500;
 
-            //image comment.
+    //image comment.
     GadgetContainerMessage< ISMRMRD::MetaContainer >* cm3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
     cm2->cont(cm3);
     std::string imageComment = "GT_B1(nT/V)";
     cm3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment.c_str());
 
 
-
-    //Pass the image down the chain
+    //Pass the b1 image down the chain
     if (this->next()->putq(cm1) < 0) {
         return GADGET_FAIL;
     }
 
+    // Scale the fa images so that they are 10 times the flip angle.
+    // The scaling of the phase images should be sorted in the floatToUShortGadget
+    for (size_t iDx = 0; iDx < elements; iDx++ )
+    {
+        src[iDx] = std::complex<float>(10.0,0.0)*(src[iDx]);
+    }
+
+    // Add some image comments
     GadgetContainerMessage< ISMRMRD::MetaContainer >* m3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
     m2->cont(m3);
-    std::string imageComment2 = "GT_FA(degrees)";
+    std::string imageComment2 = "GT_FA(degrees x 10)";
     m3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment2.c_str());
 
-    // Now pass the original down the chain
+    // Now pass the original fa image down the chain
     if (this->next()->putq(m1) < 0) {
         return GADGET_FAIL;
     }
