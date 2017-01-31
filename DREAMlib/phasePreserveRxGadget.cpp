@@ -16,11 +16,11 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     std::vector<size_t> dimensions;
     m2->getObjectPtr()->get_dimensions(dimensions);
 
-    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
-                  << "Channels = " << dimensions[3] << std::endl
-                     << "N (contrasts) = " << dimensions[4] << std::endl
-                        << "S (repetitions) = " << dimensions[5]<< std::endl
-                 );
+//    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
+//                  << "Channels = " << dimensions[3] << std::endl
+//                     << "N (contrasts) = " << dimensions[4] << std::endl
+//                        << "S (repetitions) = " << dimensions[5]<< std::endl
+//                 );
 
     size_t channelDim = 1;
     if (m1->getObjectPtr()->channels > 1) {
@@ -107,20 +107,6 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
           txMaxMap[iDx] = maxInd;
       }
 
-          if (m1->getObjectPtr()->slice==2)
-          {
-              hoNDArray<float> maxSqueeze;
-              maxSqueeze.create(dimensionsMax);
-              for (unsigned long int iDx = 0; iDx < elements; iDx++)
-              {
-                  maxSqueeze[iDx] =  txMaxMap[iDx];
-
-              }
-              maxSqueeze.squeeze();
-              Gadgetron::ImageIOAnalyze gt_exporter3;
-              gt_exporter3.export_array(maxSqueeze,"/home/wtc/Documents/temp/maxOut");
-          }
-
       // Now copy the values in the three first dimensions of txMaxMap out to cover the whole array, i.e. into the channels and contrasts dimenstions
 
       for(size_t cDx = 0; cDx < dimensions[3]; cDx++)
@@ -164,14 +150,6 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     sum_over_dimension(ccurMax,ccurMaxSum,size_t(3)); //sum over channels
     //ccurMax.squeeze();
 
-    // exporter
-    if (m1->getObjectPtr()->slice==2)
-    {
-        hoNDArray<std::complex<float>> ccurMaxSumSqueeze(ccurMaxSum);
-        ccurMaxSumSqueeze.squeeze();
-        Gadgetron::ImageIOAnalyze gt_exporter;
-        gt_exporter.export_array_complex(ccurMaxSumSqueeze,"/home/wtc/Documents/temp/rxCombSlice2Out");
-    }
     //copy into the output
     memcpy(cm2->getObjectPtr()->begin(),ccurMaxSum.begin(),ccurMaxSum.get_number_of_elements()*sizeof(std::complex<float>));
 

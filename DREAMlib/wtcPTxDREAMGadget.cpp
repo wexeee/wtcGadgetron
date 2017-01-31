@@ -75,14 +75,14 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
           w[iDx] = std::abs(d1[FIDOffset]);
       }
 
-      // exporter
-      if (m1->getObjectPtr()->slice==2)
-      {
-          hoNDArray<std::complex<float>> complexFASqueeze(complexFlipAngles);
-          complexFASqueeze.squeeze();
-          Gadgetron::ImageIOAnalyze gt_exporter;
-          gt_exporter.export_array_complex(complexFASqueeze,"/home/wtc/Documents/temp/complexFAOut");
-      }
+//      // exporter
+//      if (m1->getObjectPtr()->slice==2)
+//      {
+//          hoNDArray<std::complex<float>> complexFASqueeze(complexFlipAngles);
+//          complexFASqueeze.squeeze();
+//          Gadgetron::ImageIOAnalyze gt_exporter;
+//          gt_exporter.export_array_complex(complexFASqueeze,"/home/wtc/Documents/temp/complexFAOut");
+//      }
 
       // Now do the channel unmixing
       // get the gadget container that will be passed on
