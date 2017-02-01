@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gadgetronStreamConfiguration xsi:schemaLocation="http://gadgetron.sf.net/gadgetron gadgetron.xsd"
+        xmlns="http://gadgetron.sf.net/gadgetron"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<reader>
+  <slot>1008</slot>
+  <dll>gadgetron_mricore</dll>
+  <classname>GadgetIsmrmrdAcquisitionMessageReader</classname>
+</reader>
+
+<writer>
+  <slot>1022</slot>
+  <dll>gadgetron_mricore</dll>
+  <classname>MRIImageWriter</classname>
+</writer>
+
+<gadget>
+  <name>RemoveROOversampling</name>
+  <dll>gadgetron_mricore</dll>
+  <classname>RemoveROOversamplingGadget</classname>
+</gadget>
+
+<gadget>
+  <name>AccTrig</name>
+  <dll>gadgetron_mricore</dll>
+  <classname>AcquisitionAccumulateTriggerGadget</classname>
+  <property>
+    <name>trigger_dimension</name>
+    <value></value>
+  </property>
+  <property>
+    <name>sorting_dimension</name>
+    <value></value>
+  </property>
+</gadget>
+
+<gadget>
+  <name>Buff</name>
+  <dll>gadgetron_mricore</dll>
+  <classname>BucketToBufferGadget</classname>
+  <property><name>N_dimension</name><value>contrast</value></property>
+  <property><name>split_slices</name><value>false</value></property>
+  <property><name>ignore_segment</name><value>true</value></property>
+  <property><name>verbose</name><value>true</value></property>
+
+</gadget>
+
+<gadget>
+  <name>wtcFFT</name>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>wtcFFTGadget</classname>
+</gadget>
+
+<gadget>
+  <name>wtcRxPhase</name>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>phasePreserveRxGadget</classname>
+</gadget>
+
+<gadget>
+  <name>wtcDREAM</name>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>wtcDREAMGadget</classname>
+</gadget>
+
+<gadget>
+  <name>faToB1</name>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>faToB1Gadget</classname>
+</gadget>
+
+
+<gadget>
+  <name>Extract</name>
+  <dll>gadgetron_mricore</dll>
+  <classname>ExtractGadget</classname>
+  <property><name>extract_mask</name><value>1</value></property>
+</gadget>
+
+<gadget>
+        <name>FloatToShortAttrib</name>
+        <dll>gadgetron_mricore</dll>
+        <classname>FloatToUShortGadget</classname>
+
+        <property><name>max_intensity</name><value>4096</value></property>
+        <property><name>min_intensity</name><value>0</value></property>
+        <property><name>intensity_offset</name><value>2048</value></property>
+</gadget>
+
+<gadget>
+  <name>ImageFinish</name>
+  <dll>gadgetron_mricore</dll>
+  <classname>ImageFinishGadget</classname>
+</gadget>
+
+</gadgetronStreamConfiguration>
