@@ -21,7 +21,6 @@ namespace Gadgetron{
     protected:
       virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
                           GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2);
-      long long image_counter_;
     };
 }
 #endif //WTCSPLITGADGET_H

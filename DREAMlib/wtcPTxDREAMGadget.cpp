@@ -218,7 +218,9 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
       m2->release();
 
       //Modify header to match
-      m1->getObjectPtr()->repetition = channelCount;
+      m1->getObjectPtr()->repetition = channelCount;      
+      m1->getObjectPtr()->contrast = 0;
+      m1->getObjectPtr()->user_int[0] = 0;
 
       return this->next()->putq(m1);
 

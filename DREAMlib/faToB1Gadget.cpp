@@ -26,7 +26,7 @@ int faToB1Gadget::process_config(ACE_Message_Block* mb)
         {
             if (i->name == "PulseVoltage") {
                 rfvolt_ = i->value;
-                GDEBUG("PulseVoltage found: %f V\n", i->name.c_str());
+                GDEBUG("PulseVoltage found: %f V\n", rfvolt_);
             } else {
                 GDEBUG("WARNING: unused user parameter parameter %s found\n", i->name.c_str());
             }
@@ -91,8 +91,10 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     GadgetContainerMessage< ISMRMRD::MetaContainer >* cm3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
     cm2->cont(cm3);
     std::string imageComment = "GT_B1(nT/V)";
-    cm3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment.c_str());
+    cm3->getObjectPtr()->set(GADGETRON_IMAGECOMMENT, imageComment.c_str());
 
+    std::string seriesDescription1 = "_B1";
+    cm3->getObjectPtr()->append(GADGETRON_SEQUENCEDESCRIPTION,seriesDescription1.c_str() );
 
     //Pass the b1 image down the chain
     if (this->next()->putq(cm1) < 0) {
@@ -110,7 +112,10 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     GadgetContainerMessage< ISMRMRD::MetaContainer >* m3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
     m2->cont(m3);
     std::string imageComment2 = "GT_FA(degrees x 10)";
-    m3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment2.c_str());
+    m3->getObjectPtr()->set(GADGETRON_IMAGECOMMENT, imageComment2.c_str());
+
+    std::string seriesDescription2 = "_FA";
+    m3->getObjectPtr()->append(GADGETRON_SEQUENCEDESCRIPTION,seriesDescription2.c_str() );
 
     // Now pass the original fa image down the chain
     if (this->next()->putq(m1) < 0) {

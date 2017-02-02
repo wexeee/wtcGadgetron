@@ -6,7 +6,6 @@
 namespace Gadgetron{
 
 wtcSplitGadget::wtcSplitGadget()
-  : image_counter_(0)
 {
 
 }
@@ -23,7 +22,8 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
     img_dims[3] = m1->getObjectPtr()->channels;
 
     size_t numRep = m1->getObjectPtr()->repetition;
-    GDEBUG_STREAM("Current slice = " << m1->getObjectPtr()->slice << std::endl);
+    size_t slice = m1->getObjectPtr()->slice;
+    GDEBUG_STREAM("Current slice = " << slice << std::endl);
 
         //Loop over S
         for (uint16_t rDx=0; rDx < numRep; rDx++) {
@@ -60,24 +60,35 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
             m2->getObjectPtr()->get_sub_array(subArrayStart, subArraySize, *(cm2->getObjectPtr()));
 
             cm1->getObjectPtr()->repetition = rDx;
-            cm1->getObjectPtr()->image_index = ++image_counter_;
+            cm1->getObjectPtr()->image_index = (slice*numRep)+numRep;
 
             // To DO - add slice and channel image comment.
             //image comment.
-            GadgetContainerMessage< ISMRMRD::MetaContainer >* cm3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
-            cm2->cont(cm3);
+            GadgetContainerMessage<ISMRMRD::MetaContainer>* m3 = AsContainerMessage< ISMRMRD::MetaContainer >(m2->cont());
+            GadgetContainerMessage<ISMRMRD::MetaContainer>* cm3 = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
+
+            //Copy the header
+            *cm3->getObjectPtr() = *m3->getObjectPtr();
+
             std::ostringstream imageCommentStream;
-            imageCommentStream << "Slice: " << m1->getObjectPtr()->slice << " Channel: " << rDx;
-            std::string imageComment = "_" + imageCommentStream.str();
+            imageCommentStream << "Slice_" << m1->getObjectPtr()->slice << "_Channel_" << rDx;
+            std::string imageComment = std::string(cm3->getObjectPtr()->as_str(GADGETRON_IMAGECOMMENT)) + "_" + imageCommentStream.str();
 
-            cm3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment.c_str());
+            //append isn't working for some reason. hack around it
+            //cm3->getObjectPtr()->append(GADGETRON_IMAGECOMMENT, imageComment.c_str());
+            cm3->getObjectPtr()->set(GADGETRON_IMAGECOMMENT, imageComment.c_str());
+            cm2->cont(cm3);
 
-
+//            GDEBUG_STREAM("GADGETRON_IMAGECOMMENT is " << cm3->getObjectPtr()->as_str(GADGETRON_IMAGECOMMENT));
             //Pass the image down the chain
             if (this->next()->putq(cm1) < 0) {
                 return GADGET_FAIL;
             }
         }
+
+//    m2->cont(NULL);
+//    m2->release();
+//    m1->release();
 
 
     return GADGET_OK;
