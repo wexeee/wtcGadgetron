@@ -73,6 +73,12 @@ int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
         return GADGET_FAIL;
     }
 
+    try{ccm2->getObjectPtr()->create(dims.get());}
+    catch (std::runtime_error &err){
+        GEXCEPTION(err,"Unable to allocate new image array\n");
+        ccm1->release();
+        return GADGET_FAIL;
+    }
     std::complex<float>* src = m2->getObjectPtr()->get_data_ptr();
     std::complex<float>* dst = cm2->getObjectPtr()->get_data_ptr();
     std::complex<float>* dst2 = ccm2->getObjectPtr()->get_data_ptr();
