@@ -130,7 +130,7 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     m3->getObjectPtr()->append(GADGETRON_SEQUENCEDESCRIPTION,seriesDescription2.c_str() );
 
     // Now pass the original fa image down the chain
-    if (this->next()->putq(cm1) < 0) {
+    if (this->next()->putq(ccm1) < 0) {
         return GADGET_FAIL;
     }
 
