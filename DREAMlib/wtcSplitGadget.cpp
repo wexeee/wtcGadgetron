@@ -60,7 +60,7 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
             m2->getObjectPtr()->get_sub_array(subArrayStart, subArraySize, *(cm2->getObjectPtr()));
 
             cm1->getObjectPtr()->repetition = rDx;
-            cm1->getObjectPtr()->image_index = (slice*numRep)+numRep;
+            cm1->getObjectPtr()->image_index = (slice*numRep)+rDx;
 
             // To DO - add slice and channel image comment.
             //image comment.
