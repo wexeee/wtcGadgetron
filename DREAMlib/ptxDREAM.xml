@@ -81,8 +81,8 @@
 
 <gadget>
   <name>Extract</name>
-  <dll>gadgetron_mricore</dll>
-  <classname>ExtractGadget</classname>
+  <dll>gadgetronDREAMlib</dll>
+  <classname>wtcExtractGadget</classname>
   <property><name>extract_mask</name><value>9</value></property>
 </gadget>
 

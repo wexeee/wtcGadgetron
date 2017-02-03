@@ -67,7 +67,7 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
             GadgetContainerMessage<ISMRMRD::MetaContainer>* m3 = AsContainerMessage< ISMRMRD::MetaContainer >(m2->cont());
             GadgetContainerMessage<ISMRMRD::MetaContainer>* cm3 = new GadgetContainerMessage<ISMRMRD::MetaContainer>();
 
-            //Copy the header
+            //Copy the metacontainer
             *cm3->getObjectPtr() = *m3->getObjectPtr();
 
             std::ostringstream imageCommentStream;

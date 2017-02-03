@@ -62,6 +62,7 @@ ADD_LIBRARY(gadgetronDREAMlib SHARED
             wtcSplitGadget.cpp
             wtcDREAMGadget.cpp
             wtcPTxDREAMGadget.cpp
+            wtcExtractGadget.cpp
             faToB1Gadget.cpp)
 
 TARGET_LINK_LIBRARIES(gadgetronDREAMlib 
@@ -75,6 +76,7 @@ INSTALL (FILES phasePreserveRxGadget.h
          wtcSplitGadget.h
          wtcDREAMGadget.h
          wtcPTxDREAMGadget.h
+         wtcExtractGadget.h
          faToB1Gadget.h
          DREAMlib_export.h
          DESTINATION include)
