@@ -53,17 +53,6 @@ int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
             new GadgetContainerMessage<hoNDArray< std::complex<float> > >();
     cm1->cont(cm2);
 
-
-    GadgetContainerMessage<ISMRMRD::ImageHeader>* ccm1 =
-            new GadgetContainerMessage<ISMRMRD::ImageHeader>();
-
-    //Copy the header
-    *ccm1->getObjectPtr() = *m1->getObjectPtr();
-
-    GadgetContainerMessage< hoNDArray< std::complex<float> > >* ccm2 =
-            new GadgetContainerMessage<hoNDArray< std::complex<float> > >();
-    ccm1->cont(ccm2);
-
     boost::shared_ptr< std::vector<size_t> > dims = m2->getObjectPtr()->get_dimensions();
 
     try{cm2->getObjectPtr()->create(dims.get());}
@@ -73,15 +62,8 @@ int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
         return GADGET_FAIL;
     }
 
-    try{ccm2->getObjectPtr()->create(dims.get());}
-    catch (std::runtime_error &err){
-        GEXCEPTION(err,"Unable to allocate new image array\n");
-        ccm1->release();
-        return GADGET_FAIL;
-    }
     std::complex<float>* src = m2->getObjectPtr()->get_data_ptr();
     std::complex<float>* dst = cm2->getObjectPtr()->get_data_ptr();
-    std::complex<float>* dst2 = ccm2->getObjectPtr()->get_data_ptr();
 
 // Calculate the pulse integral using trapezium rule.
 // In matlab: pulse_int   = trapz(linspace(0,tau,numel(pulse_shape)),pulse_shape);
@@ -123,12 +105,12 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     // The scaling of the phase images should be sorted in the floatToUShortGadget
     for (size_t iDx = 0; iDx < elements; iDx++ )
     {
-        dst2[iDx] = std::complex<float>(10.0,0.0)*(src[iDx]);
+        src[iDx] = std::complex<float>(10.0,0.0)*(src[iDx]);
     }
 
     // Add some image comments
     GadgetContainerMessage< ISMRMRD::MetaContainer >* m3 = new GadgetContainerMessage< ISMRMRD::MetaContainer >;
-    ccm2->cont(m3);
+    m2->cont(m3);
     std::string imageComment2 = "GT_FA(degrees x 10)";
     m3->getObjectPtr()->set(GADGETRON_IMAGECOMMENT, imageComment2.c_str());
 
@@ -136,7 +118,7 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     m3->getObjectPtr()->append(GADGETRON_SEQUENCEDESCRIPTION,seriesDescription2.c_str() );
 
     // Now pass the original fa image down the chain
-    if (this->next()->putq(ccm1) < 0) {
+    if (this->next()->putq(m1) < 0) {
         return GADGET_FAIL;
     }
 
