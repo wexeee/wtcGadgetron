@@ -8,6 +8,7 @@
 #include <ismrmrd/ismrmrd.h>
 #include <ismrmrd/xml.h>
 #include "mri_core_data.h"
+#include "mri_core_def.h"
 
 namespace Gadgetron{
 
@@ -27,6 +28,9 @@ namespace Gadgetron{
       GADGET_PROPERTY(enableOutput,         bool,           "Switch on file output", false);
       GADGET_PROPERTY(folder,               std::string,    "Folder  for dump file", "/tmp/gadgetron");
       GADGET_PROPERTY(file_prefix,          std::string,    "Prefix for dump file", "pTxB1");
+
+      private:
+      std::string timestring_;
 
     };
 }

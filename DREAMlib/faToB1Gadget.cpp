@@ -1,7 +1,7 @@
 #include "faToB1Gadget.h"
 #include "hoNDObjectArray.h"
 #include "asymSINCPulse.h"
-#include "mri_core_def.h"
+
 
 // File output on gtron box
 #include "ImageIOAnalyze.h"
@@ -75,6 +75,9 @@ int faToB1Gadget::process_config(ACE_Message_Block* mb)
         GDEBUG("PulseVoltage are supposed to be in the UserParameters. No user parameter section found\n");
         return GADGET_OK;
     }
+
+    timestring_ = get_date_string();
+    timestring_.append(get_time_string());
 }
 
 int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
@@ -151,10 +154,13 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
 
         outFileName.append(file_prefix.value());
 
-        std::string timestring;
-        timestring = get_date_string();
-        timestring.append(get_time_string());
-        outFileName.append(timestring);
+        std::ostringstream sliceNum;
+
+        sliceNum << "Slice_" << cm1->getObjectPtr()->slice << "_";
+
+        outFileName.append(sliceNum.str());
+
+        outFileName.append(timestring_);
 
         p /= outFileName;
         outFileName = p.string();
@@ -163,7 +169,7 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
         toSave.squeeze();
 
         Gadgetron::ImageIOAnalyze gt_exporter;
-        gt_exporter.export_array_complex(toSave,outFileName);
+        gt_exporter.export_array_complex_real_imag(toSave,outFileName); // only export real and imag parts. Can be changed by using export_array_complex to do r, i, m and p.
      }
 
     // Scale the fa images so that they are 10 times the flip angle.
