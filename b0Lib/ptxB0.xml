@@ -56,6 +56,19 @@
   <name>B0Scaling</name>
   <dll>gadgetronpTxB0lib</dll>
   <classname>B0ScalingGadget</classname>
+  <property><name>enableOutput</name><value>true</value></property>
+  <property><name>folder</name><value>/tmp/pTxOutput</value></property>
+  <property><name>file_prefix</name><value>pTxB0_</value></property>
+</gadget>
+
+<gadget>
+        <name>FloatToShortAttrib</name>
+        <dll>gadgetron_mricore</dll>
+        <classname>FloatToUShortGadget</classname>
+
+        <property><name>max_intensity</name><value>4096</value></property>
+        <property><name>min_intensity</name><value>0</value></property>
+        <property><name>intensity_offset</name><value>2048</value></property>
 </gadget>
 
 <gadget>

@@ -3,8 +3,47 @@
 #include "B0ScalingGadget.h"
 #include "mri_core_def.h"
 #include <ismrmrd/xml.h>
+#include "ImageIOAnalyze.h"
+#include <boost/filesystem.hpp>
+
+namespace bf = boost::filesystem;
 
 using namespace Gadgetron;
+
+std::string get_time_string()
+    {
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+
+        std::stringstream str;
+        str << std::setw(2) << std::setfill('0') << timeinfo->tm_hour
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_min
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_sec;
+
+        std::string ret = str.str();
+
+        return ret;
+    }
+
+std::string get_date_string()
+    {
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+
+        std::stringstream str;
+        str << timeinfo->tm_year+1900
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_mon+1
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_mday;
+
+        std::string ret = str.str();
+
+        return ret;
+    }
+
 
 int B0ScalingGadget::process_config(ACE_Message_Block* mb)
 {
@@ -63,10 +102,40 @@ int B0ScalingGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
 
   for (unsigned long int i = 0; i < elements; i++)
   {
-      d[i] = d[i]/scalingFactor;
+      d[i] = -1.0*d[i]/scalingFactor; // Note the -1 which is in Des' code.
   }
 
-  m1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_MAGNITUDE;
+  if (enableOutput.value())
+  {
+      //filename
+      bf::path p(folder.value());
+
+      std::string outFileName = "";
+
+      outFileName.append(file_prefix.value());
+
+      std::string timestring;
+      timestring = get_date_string();
+      timestring.append(get_time_string());
+      outFileName.append(timestring);
+
+      p /= outFileName;
+      outFileName = p.string();
+
+      hoNDArray<float> toSave(m2->getObjectPtr());
+      toSave.squeeze();
+
+      Gadgetron::ImageIOAnalyze gt_exporter;
+      gt_exporter.export_array(toSave,outFileName);
+   }
+
+  // change to Hz offset for scanner output
+  for (unsigned long int i = 0; i < elements; i++)
+  {
+      d[i] = d[i]* (LarmorFrequencyHz_/fieldStrength_);
+  }
+
+  m1->getObjectPtr()->image_type = ISMRMRD::ISMRMRD_IMTYPE_REAL; // Change it to real so that the Float to Short Gadget recenters
 
   //Now pass on image
   if (this->next()->putq(m1) < 0) {

@@ -3,8 +3,48 @@
 #include "asymSINCPulse.h"
 #include "mri_core_def.h"
 
+// File output on gtron box
+#include "ImageIOAnalyze.h"
+#include <boost/filesystem.hpp>
+namespace bf = boost::filesystem;
+
 #define GAMMA 0.0002675222099 //gyromagnetic ratio for protons 1/(us uT) with 2pi
 namespace Gadgetron{
+
+std::string get_time_string()
+    {
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+
+        std::stringstream str;
+        str << std::setw(2) << std::setfill('0') << timeinfo->tm_hour
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_min
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_sec;
+
+        std::string ret = str.str();
+
+        return ret;
+    }
+
+std::string get_date_string()
+    {
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+
+        std::stringstream str;
+        str << timeinfo->tm_year+1900
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_mon+1
+            << std::setw(2) << std::setfill('0') << timeinfo->tm_mday;
+
+        std::string ret = str.str();
+
+        return ret;
+    }
+
 
 faToB1Gadget::faToB1Gadget():
     rfvolt_(0)
@@ -100,6 +140,31 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
     if (this->next()->putq(cm1) < 0) {
         return GADGET_FAIL;
     }
+
+
+    if (enableOutput.value())
+    {
+        //filename
+        bf::path p(folder.value());
+
+        std::string outFileName = "";
+
+        outFileName.append(file_prefix.value());
+
+        std::string timestring;
+        timestring = get_date_string();
+        timestring.append(get_time_string());
+        outFileName.append(timestring);
+
+        p /= outFileName;
+        outFileName = p.string();
+
+        hoNDArray< std::complex <float> > toSave(cm2->getObjectPtr());
+        toSave.squeeze();
+
+        Gadgetron::ImageIOAnalyze gt_exporter;
+        gt_exporter.export_array_complex(toSave,outFileName);
+     }
 
     // Scale the fa images so that they are 10 times the flip angle.
     // The scaling of the phase images should be sorted in the floatToUShortGadget

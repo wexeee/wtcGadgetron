@@ -70,6 +70,9 @@
   <name>faToB1</name>
   <dll>gadgetronDREAMlib</dll>
   <classname>faToB1Gadget</classname>
+  <property><name>enableOutput</name><value>true</value></property>
+  <property><name>folder</name><value>/tmp/pTxOutput</value></property>
+  <property><name>file_prefix</name><value>pTxB1_</value></property>
 </gadget>
 
 

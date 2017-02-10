@@ -23,6 +23,11 @@ namespace Gadgetron{
       virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
                           GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2);
       float rfvolt_;
+
+      GADGET_PROPERTY(enableOutput,         bool,           "Switch on file output", false);
+      GADGET_PROPERTY(folder,               std::string,    "Folder  for dump file", "/tmp/gadgetron");
+      GADGET_PROPERTY(file_prefix,          std::string,    "Prefix for dump file", "pTxB1");
+
     };
 }
 #endif //FATOB1GADGET_H
