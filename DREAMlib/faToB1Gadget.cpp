@@ -1,11 +1,12 @@
 #include "faToB1Gadget.h"
 #include "hoNDObjectArray.h"
 #include "asymSINCPulse.h"
-
+#include "hoNDImage.h"
 
 // File output on gtron box
 #include "ImageIOAnalyze.h"
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 namespace bf = boost::filesystem;
 
 #define GAMMA 0.0002675222099 //gyromagnetic ratio for protons 1/(us uT) with 2pi
@@ -154,24 +155,43 @@ for (size_t iDx = 0; iDx < elements; iDx++ )
 
         outFileName.append(file_prefix.value());
 
-        std::ostringstream sliceNum;
+        std::string sliceNum = (boost::format("Slice_%02i_")%cm1->getObjectPtr()->slice).str();
 
-        sliceNum << "Slice_" << cm1->getObjectPtr()->slice << "_";
+        //std::ostringstream sliceNum;
+        //sliceNum << "Slice_" << cm1->getObjectPtr()->slice << "_";
 
-        outFileName.append(sliceNum.str());
+        outFileName.append(sliceNum);
 
         outFileName.append(timestring_);
 
         p /= outFileName;
         outFileName = p.string();
 
+        // Save the array out
         hoNDArray< std::complex <float> > toSave(cm2->getObjectPtr());
         toSave.squeeze();
-
         Gadgetron::ImageIOAnalyze gt_exporter;
         gt_exporter.export_array_complex_real_imag(toSave,outFileName); // only export real and imag parts. Can be changed by using export_array_complex to do r, i, m and p.
-     }
 
+        // save pixel sizes, position and orientation out into a separate
+        std::vector<float> pixelSizes, position,orientation;
+        for (int iDx = 0; iDx <3; iDx++)
+        {
+            pixelSizes.push_back((float)cm1->getObjectPtr()->field_of_view[iDx]/(float)cm1->getObjectPtr()->matrix_size[iDx]);
+            position.push_back((float)cm1->getObjectPtr()->position[iDx]);
+            orientation.push_back((float)cm1->getObjectPtr()->read_dir[iDx]);
+            orientation.push_back((float)cm1->getObjectPtr()->phase_dir[iDx]);
+            orientation.push_back((float)cm1->getObjectPtr()->slice_dir[iDx]);
+        }
+        outFileName.append("_HEADER");
+        std::ofstream output_file(outFileName);
+        std::ostream_iterator<float> output_iterator(output_file, "\n");
+        std::copy(pixelSizes.begin(), pixelSizes.end(), output_iterator);
+        std::copy(position.begin(), position.end(), output_iterator);
+        std::copy(orientation.begin(), orientation.end(), output_iterator);
+
+        output_file.close();
+    }
     // Scale the fa images so that they are 10 times the flip angle.
     // The scaling of the phase images should be sorted in the floatToUShortGadget
     for (size_t iDx = 0; iDx < elements; iDx++ )

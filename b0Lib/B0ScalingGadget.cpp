@@ -127,6 +127,25 @@ int B0ScalingGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
 
       Gadgetron::ImageIOAnalyze gt_exporter;
       gt_exporter.export_array(toSave,outFileName);
+
+      // save pixel sizes, position and orientation out into a separate
+      std::vector<float> pixelSizes, position,orientation;
+      for (int iDx = 0; iDx <3; iDx++)
+      {
+          pixelSizes.push_back((float)m1->getObjectPtr()->field_of_view[iDx]/(float)m1->getObjectPtr()->matrix_size[iDx]);
+          position.push_back((float)m1->getObjectPtr()->position[iDx]);
+          orientation.push_back((float)m1->getObjectPtr()->read_dir[iDx]);
+          orientation.push_back((float)m1->getObjectPtr()->phase_dir[iDx]);
+          orientation.push_back((float)m1->getObjectPtr()->slice_dir[iDx]);
+      }
+      outFileName.append("_HEADER");
+      std::ofstream output_file(outFileName);
+      std::ostream_iterator<float> output_iterator(output_file, "\n");
+      std::copy(pixelSizes.begin(), pixelSizes.end(), output_iterator);
+      std::copy(position.begin(), position.end(), output_iterator);
+      std::copy(orientation.begin(), orientation.end(), output_iterator);
+
+      output_file.close();
    }
 
   // change to Hz offset for scanner output
