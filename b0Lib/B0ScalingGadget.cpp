@@ -79,6 +79,10 @@ int B0ScalingGadget::process_config(ACE_Message_Block* mb)
 
      this->LarmorFrequencyHz_ = hdr.experimentalConditions.H1resonanceFrequency_Hz;
      GDEBUG("Larmor Frequency (Hz): %f\n", this->LarmorFrequencyHz_);
+     
+    bf::path p(folder.value());
+    if (!bf::is_directory(p))
+        bf::create_directory(p);
 
     return GADGET_OK;
 }
