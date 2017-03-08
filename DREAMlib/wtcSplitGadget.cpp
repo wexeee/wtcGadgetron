@@ -53,7 +53,7 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
             subArrayStart[3] = 0;
             subArrayStart[4] = rDx;
 
-            std::vector<size_t> subArraySize = img_dims;
+            std::vector<size_t> subArraySize(img_dims);
             subArraySize.push_back(1);
             //subArraySize.push_back(1);
 

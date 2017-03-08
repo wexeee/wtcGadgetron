@@ -79,6 +79,10 @@ int faToB1Gadget::process_config(ACE_Message_Block* mb)
 
     timestring_ = get_date_string();
     timestring_.append(get_time_string());
+
+    bf::path p(folder.value());
+    if (!bf::is_directory(p))
+        bf::create_directory(p);
 }
 
 int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,

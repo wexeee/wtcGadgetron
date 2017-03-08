@@ -12,24 +12,25 @@ wtcPTxDREAMGadget::wtcPTxDREAMGadget()
 
 /* In this gadget take the fourier encoded Tx channels and unmix them*/
 int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
-                             GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2)
+                             GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2,
+                                 GadgetContainerMessage< std::vector<ISMRMRD::ImageHeader> >* m3)
 {
 
-      std::vector<size_t> newImg_dims(5);
+      std::vector<size_t> newImg_dims(6);
       newImg_dims[0] = m1->getObjectPtr()->matrix_size[0];
       newImg_dims[1] = m1->getObjectPtr()->matrix_size[1];
       newImg_dims[2] = m1->getObjectPtr()->matrix_size[2];
-      newImg_dims[3] = m1->getObjectPtr()->channels;
-      newImg_dims[4] = m1->getObjectPtr()->repetition;
+      newImg_dims[3] = m1->getObjectPtr()->slice;
+      newImg_dims[4] = m1->getObjectPtr()->channels;
+      newImg_dims[5] = m1->getObjectPtr()->repetition;
 
-      size_t slice = m1->getObjectPtr()->slice;
       size_t txMaxMapPos = 0;
-      if (newImg_dims[4] > 1)
+      if (newImg_dims[5] > 1)
       {
             //Read out the value needed for the restored phase
             txMaxMapPos = m1->getObjectPtr()->user_int[0];
       }
-    //txMaxMapPos = 0;// WTC temp hack
+
       hoNDArray<std::complex<float>> complexFlipAngles;
       complexFlipAngles.create(newImg_dims);
 
@@ -50,8 +51,8 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
       float* w = weightingArray.get_data_ptr(); // this is needed later to do the unwrapping
 
       size_t elements = complexFlipAngles.get_number_of_elements();
-      size_t elementsInRep = newImg_dims[0] * newImg_dims[1] * newImg_dims[2];
-      size_t elementsInRepCon = newImg_dims[0] * newImg_dims[1] * newImg_dims[2] * 2;
+      size_t elementsInRep = newImg_dims[0] * newImg_dims[1] * newImg_dims[2]* newImg_dims[3];
+      size_t elementsInRepCon = newImg_dims[0] * newImg_dims[1] * newImg_dims[2]* newImg_dims[3] * 2;
       for(size_t iDx = 0; iDx < elements; iDx++)
       {
           size_t currentRep = size_t(std::floor(double(iDx)/double(elementsInRep)));
@@ -85,23 +86,21 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 //      }
 
       // Now do the channel unmixing
-      // get the gadget container that will be passed on
-      GadgetContainerMessage< hoNDArray< std::complex<float> > >* m3 =
-        new GadgetContainerMessage< hoNDArray< std::complex<float> > >();
 
-      size_t channelCount = 8;
+      hoNDArray< std::complex<float>> unmixedArray;
+      size_t channelCount = 8; // To do, calculate this automatically
       std::vector<size_t> newImg_dims2(newImg_dims);
-      newImg_dims2.at(4) = channelCount;
+      newImg_dims2.at(5) = channelCount;
 
       size_t repetitions = m1->getObjectPtr()->repetition;
 
-      try{m3->getObjectPtr()->create(&newImg_dims2);}
+      try{unmixedArray.create(&newImg_dims2);}
       catch (std::runtime_error &err){
         GEXCEPTION(err,"wtcPTxDREAMGadget, failed to allocate new array\n");
         return -1;
       }
 
-      std::complex<float>* d3 = m3->getObjectPtr()->get_data_ptr();
+      std::complex<float>* d3 = unmixedArray.get_data_ptr();
 
       //Replicate the phase cycling in the dt_DREAM sequence as read from the sequence source code.
       hoNDArray<float> phaseCycling;
@@ -164,7 +163,7 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 //      % tximg = reshape(tximg,[imgsiz(1:3) size(txmod,2)]);
 
       // Loop over all elements excluding the repetition dimension
-      elements = newImg_dims2[0]*newImg_dims2[1]*newImg_dims2[2]; // We can also miss off the Rx channels as there is only 1 by now
+      elements = newImg_dims2[0]*newImg_dims2[1]*newImg_dims2[2]*newImg_dims2[3]; // We can also miss off the Rx channels as there is only 1 by now
         for (size_t iDx = 0; iDx < elements; iDx++)
         {
             hoNDArray<std::complex<float>> diagW;
@@ -213,16 +212,66 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 
         }
 
+      std::vector<size_t> output_dims(5);
+      output_dims[0] = m1->getObjectPtr()->matrix_size[0];
+      output_dims[1] = m1->getObjectPtr()->matrix_size[1];
+      output_dims[2] = m1->getObjectPtr()->matrix_size[2];
+      output_dims[3] = m1->getObjectPtr()->channels;
+      output_dims[4] = channelCount;
+
+      // finally sort out the mess of slices into multiple images
+      for (size_t sDx = 0; sDx <  m1->getObjectPtr()->slice; sDx++)
+      {
+          //Create a new image
+          GadgetContainerMessage<ISMRMRD::ImageHeader>* cm1 =
+                  new GadgetContainerMessage<ISMRMRD::ImageHeader>();
+
+          //Copy the header from those stored in the third level container
+          ISMRMRD::ImageHeader currSliceHeader = m3->getObjectPtr()->at(sDx);
+          *(cm1->getObjectPtr()) = currSliceHeader;
+
+          GadgetContainerMessage< hoNDArray< std::complex<float> > >* cm2 =
+                  new GadgetContainerMessage<hoNDArray< std::complex<float> > >();
+          cm1->cont(cm2);
+
+          try{cm2->getObjectPtr()->create(&output_dims);}
+          catch (std::runtime_error &err){
+              GEXCEPTION(err,"Unable to allocate new image array\n");
+              cm1->release();
+              return GADGET_FAIL;
+          }
+
+          std::vector<size_t> subArrayStart(6);
+          subArrayStart[0] = 0;
+          subArrayStart[1] = 0;
+          subArrayStart[2] = 0;
+          subArrayStart[3] = sDx;
+          subArrayStart[4] = 0;
+          subArrayStart[5] = 0;
+
+          std::vector<size_t> subArraySize(newImg_dims2);
+          subArraySize[3] = 1;
+
+          unmixedArray.get_sub_array(subArrayStart, subArraySize, *(cm2->getObjectPtr()));
+          std::vector<size_t> reshapeVec(*(cm2->getObjectPtr()->get_dimensions()));
+          reshapeVec.erase(reshapeVec.begin()+3);
+          cm2->getObjectPtr()->reshape(reshapeVec);
+
+          // modify header values
+          cm1->getObjectPtr()->repetition = channelCount; // Gone from 16 phase encodes to 8 Tx channels
+          cm1->getObjectPtr()->contrast = 0; // From a FID and STE to FA contrast
+          cm1->getObjectPtr()->channels = 1; // From 32 Rx channels to a combined image.
+
+          if (this->next()->putq(cm1) < 0) {
+              return GADGET_FAIL;
+          }
+
+      }
+
       //Now add the new array to the outgoing message
-      m1->cont(m3);
-      m2->release();
+      m1->release();
 
-      //Modify header to match
-      m1->getObjectPtr()->repetition = channelCount;      
-      m1->getObjectPtr()->contrast = 0;
-      m1->getObjectPtr()->user_int[0] = 0;
-
-      return this->next()->putq(m1);
+      return GADGET_OK;
 
 }
 

@@ -12,27 +12,25 @@ using namespace Gadgetron;
 int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
                              GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2)
 {
-    // wtc, expecting images slice by slice with contrasts and repetitions dimentions as well as the normal 4 (3rd [2nd PE] will be singleton).
+    // wtc, expecting 3D (including slices) images with contrasts and repetitions dimentions as well as the normal 4 (3rd [2nd PE] will be singleton).
     std::vector<size_t> dimensions;
     m2->getObjectPtr()->get_dimensions(dimensions);
 
-//    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
-//                  << "Channels = " << dimensions[3] << std::endl
-//                     << "N (contrasts) = " << dimensions[4] << std::endl
-//                        << "S (repetitions) = " << dimensions[5]<< std::endl
-//                 );
+    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
+                  << "Slices = " << dimensions[3] << std::endl
+                  << "Channels = " << dimensions[4] << std::endl
+                  << "N (contrasts) = " << dimensions[5] << std::endl
+                  << "S (repetitions) = " << dimensions[6]<< std::endl
+                 );
 
-    size_t channelDim = 1;
-    if (m1->getObjectPtr()->channels > 1) {
-      channelDim = m1->getObjectPtr()->channels;
-    }
-    size_t contrastsDim = dimensions[4];
-    size_t repetitionsDim = dimensions[5];
+    size_t channelDim = dimensions[4];
+    size_t contrastsDim = dimensions[5];
+    size_t repetitionsDim = dimensions[6];
 
-    //Create output, the size of output should be [E0 E1 E2 CHA = 1 N S]
+    //Create output, the size of output should be [E0 E1 E2 SLC CHA = 1 N S]
     std::vector<size_t> dimensionsOut;
     dimensionsOut = dimensions;
-    dimensionsOut[3]= 1;//channel dimension (4th) = 1
+    dimensionsOut[4]= 1;//channel dimension (5th) = 1
 
     //Create a new image
     GadgetContainerMessage<ISMRMRD::ImageHeader>* cm1 =
@@ -51,17 +49,20 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     catch (std::runtime_error &err ){
       GEXCEPTION(err,"Unable to create combined image array\n");
       return GADGET_FAIL;
-    }
+    }    
+
+    // Move anything being contained in m2 to cm2
+    cm2->cont(m2->cont());
+    m2->cont(NULL);
 
     // Sum over the channels and then the N (contrasts) dimension.
-    // Then find max in the S dimension
+    // Then find max in the S (repetition) dimension
     std::vector<size_t> dimensionsSum = dimensions;
-    //dimensionsSum.erase(dimensionsSum.begin()+3,dimensionsSum.end()-1);//the channels and the contrasts dim
 
     hoNDArray<std::complex<float>> sumOverCon;
     sumOverCon.create(&dimensionsSum);
 
-    dimensionsSum.erase(dimensionsSum.begin()+4);
+    dimensionsSum.erase(dimensionsSum.begin()+5);
     hoNDArray<std::complex<float>> sumOverChaCon;
     sumOverChaCon.create(&dimensionsSum);
 
@@ -75,16 +76,8 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     hoNDArray<size_t> txMaxMap;
     txMaxMap.create(&dimensionsMax);
 
-//    if (m1->getObjectPtr()->slice==2)
-//    {
-//        hoNDArray<std::complex<float>> rawSqueeze(m2->getObjectPtr());
-//        rawSqueeze.squeeze();
-//        Gadgetron::ImageIOAnalyze gt_exporter2;
-//        gt_exporter2.export_array_complex(rawSqueeze,"/home/wtc/Documents/temp/rawSlice2Out");
-//    }
-
-    Gadgetron::sum_over_dimension(*(m2->getObjectPtr()),sumOverCon,size_t(4)); //sum over contrasts
-    Gadgetron::sum_over_dimension(sumOverCon,sumOverChaCon,size_t(3)); //sum over channels
+    Gadgetron::sum_over_dimension(*(m2->getObjectPtr()),sumOverCon,size_t(5)); //sum over contrasts
+    Gadgetron::sum_over_dimension(sumOverCon,sumOverChaCon,size_t(4)); //sum over channels
 
     // Find maximum index in the final S (repetition) dimension)
     unsigned long int elements = txMaxMap.get_number_of_elements();
@@ -107,13 +100,12 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
           txMaxMap[iDx] = maxInd;
       }
 
-      // Now copy the values in the three first dimensions of txMaxMap out to cover the whole array, i.e. into the channels and contrasts dimenstions
-
-      for(size_t cDx = 0; cDx < dimensions[3]; cDx++)
+      // Now copy the values in the three four dimensions of txMaxMap out to cover the whole array, i.e. into the channels and contrasts dimenstions
+      for(size_t cDx = 0; cDx < dimensions[4]; cDx++)
       {
-          for(size_t nDx = 0; nDx < dimensions[4]; nDx++)
+          for(size_t nDx = 0; nDx < dimensions[5]; nDx++)
           {
-              size_t copyOffset = txMaxMap.get_number_of_elements()*(cDx+nDx*dimensions[3]);
+              size_t copyOffset = txMaxMap.get_number_of_elements()*(cDx+nDx*dimensions[4]);
               memcpy(txMaxMapFull.begin()+copyOffset ,txMaxMap.begin(),txMaxMap.get_number_of_elements()*sizeof(size_t));
           }
       }
@@ -123,7 +115,7 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
       hoNDArray<std::complex<float>> ccurMax;
       ccurMax.create(&dims_ccurMax);
 
-      dims_ccurMax.erase(dims_ccurMax.begin()+3); // will be summed over channels
+      dims_ccurMax.erase(dims_ccurMax.begin()+4); // will be summed over channels
       hoNDArray<std::complex<float>> ccurMaxSum;
       ccurMaxSum.create(&dims_ccurMax);
 
@@ -147,7 +139,7 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
         ccurMax[iDx] = m2->getObjectPtr()->at(iDx) * complexAngle;
     }
 
-    sum_over_dimension(ccurMax,ccurMaxSum,size_t(3)); //sum over channels
+    sum_over_dimension(ccurMax,ccurMaxSum,size_t(4)); //sum over channels
     //ccurMax.squeeze();
 
     //copy into the output
@@ -167,10 +159,10 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
 
     //size_t txMaxMapStore = txMaxMap(pos[0],pos[1],pos[2]);
 
-//    GDEBUG_STREAM("pos Image size = [" << pos[0] << " " << pos[1] << " " << pos[2] << "]" <<  std::endl
-//                     << "txMaxMap(pos[0],pos[1],pos[2]) = " << txMaxMap(pos[0],pos[1],0) << std::endl);
+    GDEBUG_STREAM("pos Image size = [" << pos[0] << " " << pos[1] << " " << pos[3] << "]" <<  std::endl
+                     << "txMaxMap(pos[0],pos[1],pos[3]) = " << txMaxMap(pos[0],pos[1],pos[3]) << std::endl);
 
-    cm1->getObjectPtr()->user_int[0] = int32_t(txMaxMap(pos[0],pos[1],0));
+    cm1->getObjectPtr()->user_int[0] = int32_t(txMaxMap(pos[0],pos[1],pos[3]));
 
   //Now pass on image
   if (this->next()->putq(cm1) < 0) {

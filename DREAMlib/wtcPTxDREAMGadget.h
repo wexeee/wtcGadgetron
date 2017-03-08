@@ -12,7 +12,7 @@
 namespace Gadgetron{
 
   class EXPORTGADGETSMRICORE wtcPTxDREAMGadget :
-  public Gadget2<ISMRMRD::ImageHeader, hoNDArray< std::complex<float> > >
+  public Gadget3<ISMRMRD::ImageHeader, hoNDArray< std::complex<float> >,  std::vector< ISMRMRD::ImageHeader > >
     {
     public:
       GADGET_DECLARE(wtcPTxDREAMGadget)
@@ -20,7 +20,8 @@ namespace Gadgetron{
 
     protected:
       virtual int process(GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
-                          GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2);
+                          GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2,
+                          GadgetContainerMessage< std::vector<ISMRMRD::ImageHeader> >* m3);
 
     };
 }
