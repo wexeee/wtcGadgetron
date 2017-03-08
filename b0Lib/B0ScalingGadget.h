@@ -3,7 +3,7 @@
 #ifndef B0SCALINGGADGET_H
 #define B0SCALINGGADGET_H
 
-#include "examplelib_export.h"
+#include "b0lib_export.h"
 #include "Gadget.h"
 #include "GadgetMRIHeaders.h"
 #include "hoNDArray.h"
