@@ -16,12 +16,14 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     std::vector<size_t> dimensions;
     m2->getObjectPtr()->get_dimensions(dimensions);
 
-    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
-                  << "Slices = " << dimensions[3] << std::endl
-                  << "Channels = " << dimensions[4] << std::endl
-                  << "N (contrasts) = " << dimensions[5] << std::endl
-                  << "S (repetitions) = " << dimensions[6]<< std::endl
-                 );
+//    Gadgetron::ImageIOAnalyze gt_exporter2;
+//    gt_exporter2.export_array_complex(*(m2->getObjectPtr()),"/media/sf_Data/20170308_MoreB1Maps/Debug/rxuncombined");
+//    GDEBUG_STREAM("Image size = [" << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << "]" <<  std::endl
+//                  << "Slices = " << dimensions[3] << std::endl
+//                  << "Channels = " << dimensions[4] << std::endl
+//                  << "N (contrasts) = " << dimensions[5] << std::endl
+//                  << "S (repetitions) = " << dimensions[6]<< std::endl
+//                 );
 
     size_t channelDim = dimensions[4];
     size_t contrastsDim = dimensions[5];
@@ -59,11 +61,14 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     // Then find max in the S (repetition) dimension
     std::vector<size_t> dimensionsSum = dimensions;
 
-    hoNDArray<std::complex<float>> sumOverCon;
+    hoNDArray<float> absImg;
+    absImg.create(&dimensionsSum);
+
+    hoNDArray<float> sumOverCon;
     sumOverCon.create(&dimensionsSum);
 
     dimensionsSum.erase(dimensionsSum.begin()+5);
-    hoNDArray<std::complex<float>> sumOverChaCon;
+    hoNDArray<float> sumOverChaCon;
     sumOverChaCon.create(&dimensionsSum);
 
     std::vector<size_t> dimensionsMax = dimensions;
@@ -76,7 +81,8 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
     hoNDArray<size_t> txMaxMap;
     txMaxMap.create(&dimensionsMax);
 
-    Gadgetron::sum_over_dimension(*(m2->getObjectPtr()),sumOverCon,size_t(5)); //sum over contrasts
+    Gadgetron::abs(*(m2->getObjectPtr()),absImg);
+    Gadgetron::sum_over_dimension(absImg,sumOverCon,size_t(5)); //sum over contrasts
     Gadgetron::sum_over_dimension(sumOverCon,sumOverChaCon,size_t(4)); //sum over channels
 
     // Find maximum index in the final S (repetition) dimension)
@@ -159,10 +165,14 @@ int phasePreserveRxGadget::process(GadgetContainerMessage< ISMRMRD::ImageHeader>
 
     //size_t txMaxMapStore = txMaxMap(pos[0],pos[1],pos[2]);
 
-    GDEBUG_STREAM("pos Image size = [" << pos[0] << " " << pos[1] << " " << pos[3] << "]" <<  std::endl
-                     << "txMaxMap(pos[0],pos[1],pos[3]) = " << txMaxMap(pos[0],pos[1],pos[3]) << std::endl);
+//    GDEBUG_STREAM("pos Image size = [" << pos[0] << " " << pos[1] << " " << pos[3] << "]" <<  std::endl
+//                     << "txMaxMap(pos[0],pos[1],pos[3]) = " << txMaxMap(pos[0],pos[1],pos[3]) << std::endl);
 
     cm1->getObjectPtr()->user_int[0] = int32_t(txMaxMap(pos[0],pos[1],pos[3]));
+
+//              Gadgetron::ImageIOAnalyze gt_exporter;
+//              gt_exporter.export_array_complex(*(cm2->getObjectPtr()),"/media/sf_Data/20170308_MoreB1Maps/Debug/rxcombined");
+
 
   //Now pass on image
   if (this->next()->putq(cm1) < 0) {

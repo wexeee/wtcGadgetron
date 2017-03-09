@@ -131,8 +131,8 @@ int wtcPTxDREAMGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m
 //      w = abs(FID);
 //      w = w./max(w(:));
 //      pinvWeightRxComb = 1./(1 + exp(-p(2).*p(1).*(w-1./p(1))));
-      float p1 = 8;
-      float p2 = 5;
+      float p1 = weight1.value();
+      float p2 = weight2.value();
       hoNDArray<float> pinvWeightRxComb;
       pinvWeightRxComb.create(newImg_dims); // Has image x repetitions dimensions
       float wMax;

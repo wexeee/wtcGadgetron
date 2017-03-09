@@ -23,6 +23,9 @@ namespace Gadgetron{
                           GadgetContainerMessage< hoNDArray< std::complex<float> > >* m2,
                           GadgetContainerMessage< std::vector<ISMRMRD::ImageHeader> >* m3);
 
+    GADGET_PROPERTY(weight1,  float,   "Weighting of pinv", 8.0);
+    GADGET_PROPERTY(weight2,  float,   "Weighting of pinv", 5.0);
+
     };
 }
 #endif //WTCPTXDREAMGADGET_H

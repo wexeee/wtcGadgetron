@@ -23,7 +23,7 @@ int wtcSplitGadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
 
     size_t numRep = m1->getObjectPtr()->repetition;
     size_t slice = m1->getObjectPtr()->slice;
-    GDEBUG_STREAM("Current slice = " << slice << std::endl);
+    //GDEBUG_STREAM("Current slice = " << slice << std::endl);
 
         //Loop over S
         for (uint16_t rDx=0; rDx < numRep; rDx++) {

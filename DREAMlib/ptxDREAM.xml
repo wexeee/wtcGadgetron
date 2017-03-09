@@ -64,6 +64,8 @@
   <name>wtcDREAMpTx</name>
   <dll>gadgetronDREAMlib</dll>
   <classname>wtcPTxDREAMGadget</classname>
+  <property><name>weight1</name><value>5.3</value></property>
+  <property><name>weight2</name><value>4.4</value></property>
 </gadget>
 
 <gadget>
