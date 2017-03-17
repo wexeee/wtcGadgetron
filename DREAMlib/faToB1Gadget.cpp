@@ -117,10 +117,17 @@ int faToB1Gadget::process( GadgetContainerMessage< ISMRMRD::ImageHeader>* m1,
 // In matlab: pulse_int   = trapz(linspace(0,tau,numel(pulse_shape)),pulse_shape);
 float pulseInt = 0.0;
 float timeStep = float(pulseDuration)/float(pulsePoints-1);
+//for (int iDx = 0; iDx < (pulsePoints-1); iDx++ )
+//{
+//    pulseInt += timeStep*(std::abs(asymSincPulse[iDx+1]) + std::abs(asymSincPulse[iDx]))/2.0;
+//}
+//GDEBUG("Pulse int WITHOUT phase is %f \n",pulseInt);
+ pulseInt = 0.0;
 for (int iDx = 0; iDx < (pulsePoints-1); iDx++ )
 {
     pulseInt += timeStep*(asymSincPulse[iDx+1] + asymSincPulse[iDx])/2.0;
 }
+//GDEBUG("Pulse int with phase is %f \n",pulseInt);
 
 
 //flipmap = flipmap./pulse_int;
