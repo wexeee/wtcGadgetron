@@ -56,10 +56,19 @@ int wtcFFTGadget::process( GadgetContainerMessage<IsmrmrdReconData>* m1)
         std::vector<size_t> sortVector;
         for (size_t iDx = 0; iDx < endOfLoop; iDx++)
         {
-            sortVector.push_back(iDx);
-            if(sortVector.size()<numberOfSlices)
+            if (numberOfSlices % 2 == 0) // Is even
             {
-                sortVector.push_back(endOfLoop+iDx);
+                if(sortVector.size()<numberOfSlices)
+                {
+                    sortVector.push_back(endOfLoop+iDx);
+                }
+                sortVector.push_back(iDx);
+            }else{
+                sortVector.push_back(iDx);
+                if(sortVector.size()<numberOfSlices)
+                {
+                    sortVector.push_back(endOfLoop+iDx);
+                }
             }
         }
 
